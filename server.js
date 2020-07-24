@@ -17,6 +17,9 @@ const bootcamps = require("./routes/bootcamps");
 // Init app with express
 const app = express();
 
+// Body parser
+app.use(express.json());
+
 // Dev logging middlware
 if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
@@ -24,7 +27,7 @@ if (process.env.NODE_ENV === "development") {
 
 //app.use(logger);
 
-// Mount routers
+// Mount routers (execute function whenever a request is received by the application.)
 app.use("/api/v1/bootcamps", bootcamps);
 
 const PORT = process.env.PORT || 5000;
