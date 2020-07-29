@@ -33,7 +33,7 @@ exports.protect = asyncHandler(async (req, res, next) => {
 
     // currently logged user
     req.user = await User.findById(decoded.id);
-    // console.log(decoded, req.user, "MIDDLEWARE");
+    // console.log(req.user, "MIDDLEWARE");
     next();
   } catch (err) {
     return next(
@@ -41,3 +41,18 @@ exports.protect = asyncHandler(async (req, res, next) => {
     );
   }
 });
+
+// Grant access to specific roles
+exports.authorize = (...roles) => {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return next(
+        new ErrorResponse(
+          `User role ${req.user.role} is not authorized to access this route`,
+          403
+        )
+      );
+    }
+    next();
+  };
+};

@@ -26,7 +26,7 @@ const app = express();
 // Body parser
 app.use(express.json());
 
-// Cookier parser
+// Cookie parser
 app.use(cookieParser());
 
 // Dev logging middlware
