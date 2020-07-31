@@ -1,6 +1,7 @@
 const ErrorResponse = require("../utils/errorResponse");
 const asyncHandler = require("../middleware/async");
 const User = require("../models/User");
+const sendEmail = require("../utils/sendEmail");
 
 // @desc      Refister user
 // @route     POST /api/v1/auth/register
@@ -78,6 +79,55 @@ const sendTokenResponse = (user, statusCode, res) => {
 exports.getMe = asyncHandler(async (req, res, next) => {
   //   console.log(req.user, "++++");
   const user = await User.findById(req.user.id);
+
+  res.status(200).json({
+    success: true,
+    data: user,
+  });
+});
+
+// @desc      Forgot password
+// @route     POST /api/v1/auth/forgotpassword
+// @access    Public
+exports.forgotPassword = asyncHandler(async (req, res, next) => {
+  //   console.log(req.user, "++++");
+  const user = await User.findOne({ email: req.body.email });
+
+  if (!user) {
+    return next(new ErrorResponse(`There is no user with that email`, 400));
+  }
+
+  // Get reset token
+  const resetToken = user.getResetPasswordToken();
+
+  //console.log(resetToken);
+
+  await user.save({ validateBeforeSave: false });
+
+  // Create reset URL
+  const resetUrl = `${req.protocol}://${req.get(
+    "host"
+  )}/api/v1/resetpassword/${resetToken}`;
+
+  const message = `Got email! ${resetUrl}`;
+
+  try {
+    await sendEmail({
+      email: user.email,
+      subject: "Password reset token",
+      message,
+    });
+
+    res.status(200).json({ success: true, data: "Email send" });
+  } catch (err) {
+    console.log(err);
+    user.getResetPasswordToken = undefined;
+    user.getResetPasswordExpire = undefined;
+
+    await user.save({ validateBeforeSave: false });
+
+    return next(new ErrorResponse("Email could not be send", 500));
+  }
 
   res.status(200).json({
     success: true,
